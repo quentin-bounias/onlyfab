@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — OnlyFab 🏉</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <div class="admin-page">
+      <!-- HEADER -->
+      <header class="header">
+        <h1>
+          Only<span>Fab</span> 🏉
+          <span style="font-size: 1rem; color: var(--text-muted)">Admin</span>
+        </h1>
+        <p class="subtitle">Gestion des candidats</p>
+      </header>
+
+      <!-- FORMULAIRE UPLOAD -->
+      <div class="upload-form">
+        <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 4px">
+          ➕ Ajouter un candidat
+        </h2>
+
+        <div class="form-group">
+          <label for="input-name">Nom du candidat</label>
+          <input
+            type="text"
+            id="input-name"
+            placeholder="ex : Jean Dupont"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="input-photo">Photo (tous formats acceptés)</label>
+          <input type="file" id="input-photo" accept="image/*" />
+        </div>
+
+        <div id="upload-preview" class="hidden" style="margin-top: 8px">
+          <img
+            id="preview-img"
+            style="
+              width: 120px;
+              border-radius: 8px;
+              object-fit: cover;
+              aspect-ratio: 2/3;
+            "
+            alt="Aperçu"
+          />
+        </div>
+
+        <button
+          class="btn btn-primary"
+          id="btn-upload"
+          style="align-self: flex-start"
+        >
+          Uploader
+        </button>
+
+        <div
+          id="upload-feedback"
+          style="font-size: 0.9rem; min-height: 20px"
+        ></div>
+      </div>
+
+      <!-- LISTE DES CANDIDATS -->
+      <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px">
+        👥 Candidats (<span id="persons-count">0</span>)
+      </h2>
+
+      <div
+        id="loader-admin"
+        style="text-align: center; padding: 20px 0; color: var(--text-muted)"
+      >
+        Chargement…
+      </div>
+
+      <div class="persons-grid" id="persons-grid"></div>
+
+      <!-- RETOUR -->
+      <div style="text-align: center; margin-top: 40px">
+        <a href="/" class="btn btn-outline">← Retour au site</a>
+      </div>
+    </div>
+
+    <script>
+      // ===========================
+      // CREDENTIALS (stockés en mémoire de session)
+      // ===========================
+      let authHeader = "";
+
+      function initAuth() {
+        const user = prompt("Login admin :");
+        const pass = prompt("Mot de passe :");
+        authHeader = "Basic " + btoa(`${user}:${pass}`);
+      }
+
+      function authFetch(url, options = {}) {
+        return fetch(url, {
+          ...options,
+          headers: {
+            ...options.headers,
+            Authorization: authHeader,
+          },
+        });
+      }
+
+      // ===========================
+      // DOM
+      // ===========================
+      const inputName = document.getElementById("input-name");
+      const inputPhoto = document.getElementById("input-photo");
+      const btnUpload = document.getElementById("btn-upload");
+      const uploadFeedback = document.getElementById("upload-feedback");
+      const uploadPreview = document.getElementById("upload-preview");
+      const previewImg = document.getElementById("preview-img");
+      const personsGrid = document.getElementById("persons-grid");
+      const personsCount = document.getElementById("persons-count");
+      const loaderAdmin = document.getElementById("loader-admin");
+
+      // ===========================
+      // APERÇU PHOTO
+      // ===========================
+      inputPhoto.addEventListener("change", () => {
+        const file = inputPhoto.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        previewImg.src = url;
+        uploadPreview.classList.remove("hidden");
+      });
+
+      // ===========================
+      // UPLOAD
+      // ===========================
+      btnUpload.addEventListener("click", async () => {
+        const name = inputName.value.trim();
+        const photo = inputPhoto.files[0];
+
+        if (!name) {
+          setFeedback("⚠️ Saisis un nom.", "var(--accent)");
+          return;
+        }
+        if (!photo) {
+          setFeedback("⚠️ Sélectionne une photo.", "var(--accent)");
+          return;
+        }
+
+        btnUpload.disabled = true;
+        setFeedback("Upload en cours…", "var(--text-muted)");
+
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("photo", photo);
+
+        try {
+          const res = await authFetch("/api/admin/persons", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Erreur inconnue.");
+          }
+
+          setFeedback("✅ Candidat ajouté !", "green");
+          inputName.value = "";
+          inputPhoto.value = "";
+          uploadPreview.classList.add("hidden");
+          await loadPersons();
+        } catch (e) {
+          setFeedback(`❌ ${e.message}`, "var(--accent)");
+        } finally {
+          btnUpload.disabled = false;
+        }
+      });
+
+      // ===========================
+      // LISTE CANDIDATS
+      // ===========================
+      async function loadPersons() {
+        loaderAdmin.style.display = "block";
+        personsGrid.innerHTML = "";
+
+        try {
+          const res = await authFetch("/api/admin/persons");
+          if (!res.ok) throw new Error("Erreur chargement.");
+
+          const persons = await res.json();
+          personsCount.textContent = persons.length;
+
+          if (persons.length === 0) {
+            personsGrid.innerHTML = `
+        <p style="color: var(--text-muted); grid-column: 1/-1;">
+          Aucun candidat pour le moment.
+        </p>`;
+          } else {
+            persons.forEach((p) => personsGrid.appendChild(buildPersonCard(p)));
+          }
+        } catch (e) {
+          personsGrid.innerHTML = `
+      <p style="color: var(--accent); grid-column: 1/-1;">${e.message}</p>`;
+        } finally {
+          loaderAdmin.style.display = "none";
+        }
+      }
+
+      function buildPersonCard(person) {
+        const card = document.createElement("div");
+        card.className = "person-card";
+        card.id = `person-${person.id}`;
+
+        card.innerHTML = `
+    <img src="/media/${person.filename}" alt="${person.name}" loading="lazy">
+    <div class="person-name">${person.name}</div>
+    <button class="delete-btn" title="Supprimer">✕</button>
+  `;
+
+        card.querySelector(".delete-btn").addEventListener("click", () => {
+          deletePerson(person.id, person.name);
+        });
+
+        return card;
+      }
+
+      // ===========================
+      // SUPPRESSION
+      // ===========================
+      async function deletePerson(id, name) {
+        if (!confirm(`Supprimer "${name}" ? Cette action est irréversible.`))
+          return;
+
+        try {
+          const res = await authFetch(`/api/admin/persons/${id}`, {
+            method: "DELETE",
+          });
+          if (!res.ok) throw new Error("Erreur suppression.");
+
+          const card = document.getElementById(`person-${id}`);
+          if (card) card.remove();
+          personsCount.textContent = parseInt(personsCount.textContent) - 1;
+        } catch (e) {
+          alert(`Erreur : ${e.message}`);
+        }
+      }
+
+      // ===========================
+      // UTILITAIRE
+      // ===========================
+      function setFeedback(message, color) {
+        uploadFeedback.textContent = message;
+        uploadFeedback.style.color = color;
+      }
+
+      // ===========================
+      // INIT
+      // ===========================
+      document.addEventListener("DOMContentLoaded", () => {
+        initAuth(); // Demande login/password au chargement
+        loadPersons();
+      });
+    </script>
+  </body>
+</html>

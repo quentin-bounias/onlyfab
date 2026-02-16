@@ -1,0 +1,19 @@
+services:
+  onlyfab:
+    build: .
+    container_name: onlyfab
+    restart: unless-stopped
+    ports:
+      - "8042:8042"
+    volumes:
+      # Persistance des données entre les rebuilds
+      - ./media:/app/media
+      - ./data:/app/data
+    environment:
+      - ADMIN_USER=${ADMIN_USER}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8042/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

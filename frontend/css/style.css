@@ -1,0 +1,624 @@
+/* ===========================
+   RESET & BASE
+=========================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary: #1a1a2e;
+  --secondary: #16213e;
+  --accent: #e94560;
+  --accent2: #0f3460;
+  --text: #eaeaea;
+  --text-muted: #888;
+  --card-bg: #16213e;
+  --radius: 16px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--primary);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  overscroll-behavior: none;
+}
+
+/* ===========================
+     LAYOUT
+  =========================== */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px 80px;
+}
+
+/* ===========================
+     HEADER
+  =========================== */
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+  width: 100%;
+  max-width: 600px;
+}
+
+.header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+
+.header h1 span {
+  color: var(--accent);
+}
+
+.header .subtitle {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+/* ===========================
+     COMPTEUR
+  =========================== */
+.counter-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.counter-text {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.counter-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--accent);
+  min-width: 32px;
+  text-align: center;
+  transition: transform 0.2s ease;
+}
+
+.counter-value.bump {
+  transform: scale(1.4);
+}
+
+/* ===========================
+     CARD SWIPE
+  =========================== */
+.card-container {
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.swipe-card {
+  width: 100%;
+  aspect-ratio: 600 / 900;
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+  box-shadow: var(--shadow);
+  cursor: grab;
+  transition: transform 0.08s ease;
+  background: var(--card-bg);
+}
+
+.swipe-card:active {
+  cursor: grabbing;
+}
+
+/* Les deux moitiés de la card */
+.card-half {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-half.left {
+  left: 0;
+}
+.card-half.right {
+  right: 0;
+}
+
+.card-half img {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 200%; /* double largeur pour que le crop soit toujours centré */
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+.card-half.left img {
+  left: 0;
+}
+.card-half.right img {
+  right: 0;
+}
+
+/* Séparateur central */
+.card-divider {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.25);
+  z-index: 10;
+  transition: opacity 0.25s ease;
+}
+
+/* Overlay de vote (check vert / croix rouge) */
+.card-overlay {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.card-overlay.left-overlay {
+  background: linear-gradient(to right, rgba(76, 175, 80, 0.45), transparent);
+}
+.card-overlay.right-overlay {
+  background: linear-gradient(to left, rgba(233, 69, 96, 0.45), transparent);
+}
+
+/* Labels noms */
+.card-label {
+  position: absolute;
+  bottom: 16px;
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.card-label.left {
+  left: 12px;
+}
+.card-label.right {
+  right: 12px;
+}
+
+/* ===========================
+     ÉTAT : SWIPE EN COURS
+  =========================== */
+.swipe-card.swiping-left .card-half.left {
+  width: 70%;
+}
+.swipe-card.swiping-left .card-half.right {
+  width: 30%;
+}
+.swipe-card.swiping-left .card-overlay.left-overlay {
+  opacity: 1;
+}
+
+.swipe-card.swiping-right .card-half.right {
+  width: 70%;
+}
+.swipe-card.swiping-right .card-half.left {
+  width: 30%;
+}
+.swipe-card.swiping-right .card-overlay.right-overlay {
+  opacity: 1;
+}
+
+/* ===========================
+     ANIMATION VOTE CONFIRMÉ
+  =========================== */
+@keyframes voteLeft {
+  0% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-120%) rotate(-15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes voteRight {
+  0% {
+    transform: translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+.swipe-card.vote-left {
+  animation: voteLeft 0.35s ease forwards;
+}
+.swipe-card.vote-right {
+  animation: voteRight 0.35s ease forwards;
+}
+
+/* ===========================
+     BOUTONS
+  =========================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 32px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  text-decoration: none;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+.btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: var(--accent2);
+  color: #fff;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+
+/* ===========================
+     ACTIONS (après 5 votes)
+  =========================== */
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 28px;
+  width: 100%;
+  max-width: 600px;
+  animation: fadeIn 0.4s ease;
+}
+
+.actions-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Bouton résultats sticky en bas lors du scroll infini */
+.sticky-results {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sticky-results.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ===========================
+     PAGE RÉSULTATS
+  =========================== */
+.results-page {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.results-page h1 {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.period-tabs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+
+.tab {
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: 2px solid var(--accent2);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab.active,
+.tab:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.3s ease;
+}
+
+.ranking-item.top1 {
+  border-left: 4px solid gold;
+}
+.ranking-item.top2 {
+  border-left: 4px solid silver;
+}
+.ranking-item.top3 {
+  border-left: 4px solid #cd7f32;
+}
+
+.rank-number {
+  font-size: 1.3rem;
+  font-weight: 800;
+  min-width: 36px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.rank-number.gold {
+  color: gold;
+}
+.rank-number.silver {
+  color: silver;
+}
+.rank-number.bronze {
+  color: #cd7f32;
+}
+
+.rank-photo {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.rank-info {
+  flex: 1;
+}
+
+.rank-name {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.rank-stats {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.rank-elo {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+/* ===========================
+     ADMIN
+  =========================== */
+.admin-page {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 24px 16px 80px;
+}
+
+.admin-page h1 {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 32px;
+}
+
+.upload-form {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 32px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.form-group input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.persons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.person-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.person-card img {
+  width: 100%;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  display: block;
+}
+
+.person-card .person-name {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.person-card .delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease;
+}
+
+.person-card .delete-btn:hover {
+  transform: scale(1.15);
+}
+
+/* ===========================
+     UTILITAIRES
+  =========================== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hidden {
+  display: none !important;
+}
+
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent2);
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  z-index: 200;
+  animation: fadeIn 0.3s ease;
+  pointer-events: none;
+}
+
+/* ===========================
+     RESPONSIVE
+  =========================== */
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.5rem;
+  }
+  .btn {
+    padding: 12px 24px;
+    font-size: 0.9rem;
+  }
+  .ranking-item {
+    gap: 10px;
+  }
+  .rank-photo {
+    width: 48px;
+    height: 48px;
+  }
+}

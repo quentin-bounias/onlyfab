@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Qui ressemble le plus à Fabien Galthié ? Vote et découvre le classement !"
+    />
+    <title>OnlyFab 🏉</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- HEADER -->
+      <header class="header">
+        <h1>Only<span>Fab</span> 🏉</h1>
+        <p class="subtitle">Qui ressemble le plus à Fabien Galthié ?</p>
+      </header>
+
+      <!-- COMPTEUR -->
+      <div class="counter-wrapper" id="counter-wrapper">
+        <span class="counter-text"
+          >Pour voir le classement, comparez encore</span
+        >
+        <span class="counter-value" id="counter-value">5</span>
+        <span class="counter-text">Fab</span>
+      </div>
+
+      <!-- CARD SWIPE -->
+      <div class="card-container" id="card-container">
+        <!-- La card est injectée dynamiquement par swipe.js -->
+      </div>
+
+      <!-- ACTIONS (visibles après 5 votes) -->
+      <div class="actions hidden" id="actions">
+        <p style="color: var(--text-muted); font-size: 0.95rem">
+          Tu as comparé 5 Fabs 🎉
+        </p>
+        <div class="actions-row">
+          <button class="btn btn-primary" id="btn-results">🏆 Résultats</button>
+          <button class="btn btn-secondary" id="btn-continue">
+            ▶️ Continuer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOUTON RÉSULTATS STICKY (mode infini) -->
+    <div class="sticky-results" id="sticky-results">
+      <button class="btn btn-primary" id="btn-results-sticky">
+        🏆 Voir les résultats
+      </button>
+    </div>
+
+    <script src="/static/js/swipe.js"></script>
+  </body>
+</html>

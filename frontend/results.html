@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Classement des sosies de Fabien Galthié"
+    />
+    <title>Classement — OnlyFab 🏉</title>
+    <link rel="stylesheet" href="/static/css/style.css" />
+  </head>
+  <body>
+    <div class="results-page">
+      <!-- HEADER -->
+      <header class="header">
+        <h1>Only<span>Fab</span> 🏉</h1>
+        <p class="subtitle">Le classement des meilleurs Fabs</p>
+      </header>
+
+      <!-- TABS PÉRIODES -->
+      <div class="period-tabs">
+        <button class="tab" data-period="day">Aujourd'hui</button>
+        <button class="tab" data-period="week">Cette semaine</button>
+        <button class="tab" data-period="month">Ce mois</button>
+        <button class="tab" data-period="year">Cette année</button>
+      </div>
+
+      <!-- LOADER -->
+      <div
+        id="loader"
+        style="text-align: center; padding: 40px 0; color: var(--text-muted)"
+      >
+        Chargement…
+      </div>
+
+      <!-- LISTE CLASSEMENT -->
+      <div class="ranking-list" id="ranking-list"></div>
+
+      <!-- RETOUR AU VOTE -->
+      <div style="text-align: center; margin-top: 40px">
+        <a href="/" class="btn btn-outline"> ← Retour au vote </a>
+      </div>
+    </div>
+
+    <script src="/static/js/results.js"></script>
+  </body>
+</html>
