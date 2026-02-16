@@ -31,14 +31,15 @@ body {
 }
 
 /* ===========================
-     LAYOUT
-  =========================== */
+   LAYOUT
+=========================== */
 .app {
   min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height sur mobile */
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 16px 80px;
+  padding: 16px 12px 80px;
 }
 
 /* ===========================
@@ -98,11 +99,11 @@ body {
 }
 
 /* ===========================
-     CARD SWIPE
-  =========================== */
+   CARD SWIPE
+=========================== */
 .card-container {
   width: 100%;
-  max-width: 600px;
+  max-width: min(600px, calc(100vw - 24px));
   position: relative;
   user-select: none;
   touch-action: pan-y;
@@ -110,13 +111,14 @@ body {
 
 .swipe-card {
   width: 100%;
-  aspect-ratio: 600 / 900;
+  /* Hauteur adaptative : prend le max de place dispo sans dépasser l'écran */
+  aspect-ratio: 2 / 3;
+  max-height: calc(100dvh - 220px);
   border-radius: var(--radius);
   overflow: hidden;
   position: relative;
   box-shadow: var(--shadow);
   cursor: grab;
-  transition: transform 0.08s ease;
   background: var(--card-bg);
 }
 
@@ -128,34 +130,31 @@ body {
 .card-half {
   position: absolute;
   top: 0;
-  width: 50%;
   height: 100%;
   overflow: hidden;
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    left 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-half.left {
   left: 0;
+  width: 50%;
 }
 .card-half.right {
   right: 0;
+  width: 50%;
 }
 
 .card-half img {
   position: absolute;
   top: 0;
   height: 100%;
-  width: 200%; /* double largeur pour que le crop soit toujours centré */
+  width: 100%;
   object-fit: cover;
-  object-position: center;
+  object-position: center center;
   pointer-events: none;
-}
-
-.card-half.left img {
-  left: 0;
-}
-.card-half.right img {
-  right: 0;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Séparateur central */
@@ -168,7 +167,7 @@ body {
   height: 100%;
   background: rgba(255, 255, 255, 0.25);
   z-index: 10;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease, left 0.25s ease;
 }
 
 /* Overlay de vote (check vert / croix rouge) */
@@ -188,10 +187,10 @@ body {
 }
 
 .card-overlay.left-overlay {
-  background: linear-gradient(to right, rgba(76, 175, 80, 0.45), transparent);
+  background: linear-gradient(to right, rgba(76, 73, 164, 0.45), transparent);
 }
 .card-overlay.right-overlay {
-  background: linear-gradient(to left, rgba(233, 69, 96, 0.45), transparent);
+  background: linear-gradient(to left, rgba(76, 73, 164, 0.45), transparent);
 }
 
 /* Labels noms */
@@ -218,23 +217,42 @@ body {
 }
 
 /* ===========================
-     ÉTAT : SWIPE EN COURS
-  =========================== */
+   ÉTAT : SWIPE EN COURS
+=========================== */
+
+/* Swipe gauche → gauche prend toute la place, droite se décale et disparaît */
 .swipe-card.swiping-left .card-half.left {
-  width: 70%;
+  width: 100%;
+  left: 0;
+}
+.swipe-card.swiping-left .card-half.left img {
+  width: 100%;
+  object-position: center center;
 }
 .swipe-card.swiping-left .card-half.right {
-  width: 30%;
+  width: 0%;
+}
+.swipe-card.swiping-left .card-divider {
+  opacity: 0;
 }
 .swipe-card.swiping-left .card-overlay.left-overlay {
   opacity: 1;
 }
 
+/* Swipe droite → droite prend toute la place, gauche se décale et disparaît */
 .swipe-card.swiping-right .card-half.right {
-  width: 70%;
+  width: 100%;
+  right: 0;
+}
+.swipe-card.swiping-right .card-half.right img {
+  width: 100%;
+  object-position: center center;
 }
 .swipe-card.swiping-right .card-half.left {
-  width: 30%;
+  width: 0%;
+}
+.swipe-card.swiping-right .card-divider {
+  opacity: 0;
 }
 .swipe-card.swiping-right .card-overlay.right-overlay {
   opacity: 1;
